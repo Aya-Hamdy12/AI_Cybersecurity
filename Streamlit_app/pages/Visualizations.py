@@ -7,17 +7,14 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 import plotly.express as px
 import plotly.graph_objects as go
 
-# ---------------------------
+
 # Page Config
-# ---------------------------
 st.set_page_config(
     page_title="Models Visualizations & Ensemble",
     layout="wide"
 )
 
-# ---------------------------
 # CSS Styling (neon headers, hologram frame, metric cards)
-# ---------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;700&display=swap');
@@ -85,9 +82,7 @@ p { color: #b0b0b0; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------
 # Paths
-# ---------------------------
 BASE_DIR = r"C:/Graduation Project/AI_Cybersecurity"
 
 @st.cache_data
@@ -100,24 +95,18 @@ def load_artifacts():
 
 ae_preds, ae_threshold, iso_preds, y_true = load_artifacts()
 
-# ---------------------------
 # Title
-# ---------------------------
-st.markdown("<h2>Models Visualizations & Metrics</h2>", unsafe_allow_html=True)
-st.markdown('<div class="hologram-wrap">', unsafe_allow_html=True)
+# Page Title inside hologram wrapper
+st.markdown('<div class="hologram-wrap"><h2>Models Visualizations & Metrics</h2></div>', unsafe_allow_html=True)
 
-# ---------------------------
 # Model Selector
-# ---------------------------
 model_choice = st.radio(
     "Select Model",
     ["AutoEncoder", "Isolation Forest", "Ensemble"],
     horizontal=True
 )
 
-# ---------------------------
 # Helper function: Metrics & Plots
-# ---------------------------
 def display_metrics(y_true, y_pred, probs=None):
     acc = accuracy_score(y_true, y_pred)
     st.markdown(f"**Accuracy:** {acc:.4f}")
@@ -148,9 +137,7 @@ def display_metrics(y_true, y_pred, probs=None):
         fig_pr.update_layout(title='Precision-Recall Curve', xaxis_title='Recall', yaxis_title='Precision')
         st.plotly_chart(fig_pr)
 
-# ---------------------------
 # AutoEncoder
-# ---------------------------
 if model_choice == "AutoEncoder":
     anomaly_flags = (ae_preds > ae_threshold).astype(int)
     col1, col2 = st.columns(2)
@@ -165,9 +152,7 @@ if model_choice == "AutoEncoder":
     st.dataframe(pd.DataFrame({"Reconstruction_Error": ae_preds, "Anomaly": anomaly_flags}).head(100))
     display_metrics(y_true, anomaly_flags, probs=ae_preds)
 
-# ---------------------------
 # Isolation Forest
-# ---------------------------
 elif model_choice == "Isolation Forest":
     iso_flags = (iso_preds == -1).astype(int)
     col1, col2 = st.columns(2)
@@ -180,9 +165,8 @@ elif model_choice == "Isolation Forest":
     st.dataframe(pd.DataFrame({"Prediction": iso_flags}).head(100))
     display_metrics(y_true, iso_flags)
 
-# ---------------------------
+
 # Ensemble (AutoEncoder + Isolation Forest)
-# ---------------------------
 else:
     ae_flags = (ae_preds > ae_threshold).astype(int)
     iso_flags = (iso_preds == -1).astype(int)

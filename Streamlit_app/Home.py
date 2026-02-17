@@ -1,17 +1,13 @@
 import streamlit as st
 from PIL import Image
 
-# ---------------------------
-# Page config
-# ---------------------------
+# Page configuration
 st.set_page_config(
     page_title="AI Cybersecurity App",
     layout="wide",
 )
 
-# ---------------------------
 # CSS Styling (neon headers, hologram frame, metric cards)
-# ---------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;700&display=swap');
@@ -80,9 +76,7 @@ p { color: #b0b0b0; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------
 # Hologram frame with title + image
-# ---------------------------
 # st.markdown('<h1>AI-Powered Cybersecurity Anomaly Detection</h1>', unsafe_allow_html=True)
 
 # Load image (make sure image.png is in the same folder)
@@ -91,9 +85,8 @@ st.image(image, caption="", width=1080)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ---------------------------
+
 # Metric Cards Section
-# ---------------------------
 st.markdown('<h2>REAL-TIME CYBERSECURITY MONITORING</h2>', unsafe_allow_html=True)
 st.markdown("""
 <div class="metric-container">
@@ -120,29 +113,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
-# ---------------------------
 # Project Description
-# ---------------------------
 st.markdown('<h2>Project Description</h2>', unsafe_allow_html=True)
 st.write("""
-This project aims to design and develop an **AI-powered cybersecurity system** that detects network anomalies 
-and potential cyberattacks in real-time. Traditional Intrusion Detection Systems (IDS) rely on fixed rule sets 
-and signatures, making them ineffective against zero-day attacks and insider threats.
+This project presents an **AI-powered cybersecurity system** for real-time detection of network anomalies 
+and cyberattacks. Unlike traditional rule-based IDS, the system adapts to **unknown and evolving threats** 
+by learning normal network behavior using Artificial Intelligence.
 
-Our system introduces a more adaptive approach by integrating **Artificial Intelligence (AI)**, **Explainable AI (XAI)**, 
-and **continuous learning techniques**. The AI component automatically learns each organization’s unique patterns 
-of normal network behavior and identifies deviations as potential anomalies.
+An **ensemble of models** ensures stable and reliable anomaly detection, while a **self-healing mechanism** 
+monitors performance and triggers retraining when accuracy degrades.  
 
-Through an **ensemble of models**, the system achieves stable and reliable anomaly detection. A **self-healing mechanism** 
-monitors performance over time and triggers retraining when accuracy drops, allowing the model to adapt to evolving network conditions.
-
-The system is designed as an **API-based service**, allowing integration with existing monitoring tools or signature-based IDS 
-for a hybrid setup. The **XAI layer** explains the reasoning behind each alert in a human-understandable way, enabling 
-security analysts to trust, interpret, and act on system outputs.
-
-Traditional IDS are efficient for known threats; our system complements that by extending protection to **unknown and evolving threats**. 
-Efficiency can improve with optimization, but **adaptability and coverage** are our focus.
+The system is designed as an **API-based service** for easy integration with existing security tools. 
+An **Explainable AI (XAI)** layer provides transparent and human-understandable explanations for each alert, 
+helping security analysts trust and act on the results.
 """)
 
 st.header("Goal")
@@ -187,50 +170,50 @@ st.markdown("""
 - **Documentation & Reports**
 """)
 
-st.header("Project Methodology / System Pipeline")
-st.markdown("""
-1. **Data Acquisition and Preparation**  
-   - Datasets: CICIDS2017  
-   - Tools: Python (Pandas, NumPy, Scikit-learn)  
-   - Tasks: Merge CSVs, feature selection, missing values handling, encoding, normalization, train-test split  
+# st.header("Project Methodology / System Pipeline")
+# st.markdown("""
+# 1. **Data Acquisition and Preparation**  
+#    - Datasets: CICIDS2017  
+#    - Tools: Python (Pandas, NumPy, Scikit-learn)  
+#    - Tasks: Merge CSVs, feature selection, missing values handling, encoding, normalization, train-test split  
 
-2. **AI-Based Anomaly Detection Models**  
-   - Models: Autoencoder, Isolation Forest, One-Class SVM  
-   - Ensemble for more stable predictions  
-   - Continuous learning with periodic retraining  
+# 2. **AI-Based Anomaly Detection Models**  
+#    - Models: Autoencoder, Isolation Forest, One-Class SVM  
+#    - Ensemble for more stable predictions  
+#    - Continuous learning with periodic retraining  
 
-3. **Signature-Based IDS Integration**  
-   - Tools: Snort / Suricata  
-   - Acts as pre-processing filter before AI analysis  
+# 3. **Signature-Based IDS Integration**  
+#    - Tools: Snort / Suricata  
+#    - Acts as pre-processing filter before AI analysis  
 
-4. **Explainability Layer (XAI)**  
-   - Techniques: SHAP, LIME  
-   - Generates feature-importance and visual plots  
+# 4. **Explainability Layer (XAI)**  
+#    - Techniques: SHAP, LIME  
+#    - Generates feature-importance and visual plots  
 
-5. **Self-Healing and Continuous Learning**  
-   - Monitor model performance  
-   - Retraining triggered automatically when metrics drop  
+# 5. **Self-Healing and Continuous Learning**  
+#    - Monitor model performance  
+#    - Retraining triggered automatically when metrics drop  
 
-6. **Backend API Service**  
-   - RESTful endpoints: /upload, /predict, /retrain, /report  
-   - Handles multiple organizations and stores logs  
+# 6. **Backend API Service**  
+#    - RESTful endpoints: /upload, /predict, /retrain, /report  
+#    - Handles multiple organizations and stores logs  
 
-7. **Database Layer**  
-   - Store predictions, explanations, timestamps, retraining data  
-   - PostgreSQL or MongoDB  
+# 7. **Database Layer**  
+#    - Store predictions, explanations, timestamps, retraining data  
+#    - PostgreSQL or MongoDB  
 
-8. **Frontend Dashboard**  
-   - Tools: Streamlit or Angular  
-   - Real-time anomaly display, risk levels, and XAI visuals  
+# 8. **Frontend Dashboard**  
+#    - Tools: Streamlit or Angular  
+#    - Real-time anomaly display, risk levels, and XAI visuals  
 
-9. **Simulation and Testing**  
-   - Feeder script streams dataset records  
-   - Validate full pipeline and test API endpoints  
+# 9. **Simulation and Testing**  
+#    - Feeder script streams dataset records  
+#    - Validate full pipeline and test API endpoints  
 
-10. **Deployment**  
-    - Docker, GitHub, cloud deployment  
-    - Enables real-time simulation or live network monitoring
-""")
+# 10. **Deployment**  
+#     - Docker, GitHub, cloud deployment  
+#     - Enables real-time simulation or live network monitoring
+# """)
 
 # st.header("Benchmark Studies: Traditional vs. AI-Based IDS")
 # st.markdown("""
