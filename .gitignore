@@ -1,0 +1,17 @@
+# Ignore all data
+Data/
+
+# Ignore models
+Models/*.pkl
+Models/*.h5
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# System files (Windows)
+Thumbs.db
+.DS_Store
