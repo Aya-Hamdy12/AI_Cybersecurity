@@ -97,12 +97,12 @@ st.markdown("""
     </div>
     <div class="metric-card">
         <h3>MODELS</h3>
-        <p>Isolation Forest / Autoencoder</p>
+        <p>Isolation Forest / Autoencoder / PCA</p>
         <p>With Ensemble</p>
     </div>
     <div class="metric-card">
         <h3>BEST MODEL</h3>
-        <p>Isolation Forest</p>
+        <p>Ensemble</p>
         <p> 94% acc</p>
     </div>
     <div class="metric-card">
