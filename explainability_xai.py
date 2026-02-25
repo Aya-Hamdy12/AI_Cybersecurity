@@ -143,8 +143,63 @@ def plot_ensemble_waterfall(x_sample, ensemble_shap_values, feature_names, base_
     return fig
 
 
+def validate_and_prepare_input(x_sample, expected_num_features):
+    """
+    Ensures input is:
+    - numpy array
+    - numeric
+    - shape (1, n_features)
+    - correct number of features
+
+    If possible, reshapes automatically.
+    Raises clear error if impossible.
+    """
+
+    # Convert pandas → numpy
+    if isinstance(x_sample, pd.DataFrame) or isinstance(x_sample, pd.Series):
+        x_sample = x_sample.values
+
+    # Convert to numpy array
+    x_sample = np.array(x_sample)
+
+    # If empty → stop immediately
+    if x_sample.size == 0:
+        raise ValueError("Input sample is empty. No features were passed.")
+
+    # If 1D (50,) → reshape to (1, 50)
+    if x_sample.ndim == 1:
+        x_sample = x_sample.reshape(1, -1)
+
+    # If shape is (n, 1, 50) or weird → squeeze
+    if x_sample.ndim > 2:
+        x_sample = np.squeeze(x_sample)
+
+    # Final reshape check
+    if x_sample.ndim == 1:
+        x_sample = x_sample.reshape(1, -1)
+
+    # Check feature count
+    if x_sample.shape[1] != expected_num_features:
+        raise ValueError(
+            f"Feature mismatch: Model expects {expected_num_features} features "
+            f"but received {x_sample.shape[1]}"
+        )
+
+    # Ensure numeric
+    x_sample = x_sample.astype(np.float32)
+
+    return x_sample
+
+
+
+
 
 def explain_single_anomaly(x_sample):
+    # Validate & fix input
+    x_sample = validate_and_prepare_input(
+        x_sample,
+        expected_num_features=len(columns_names)
+    )
     # Compute SHAP values
     iso_shap, ae_shap = compute_shap_values(x_sample)
     # Compute ensemble SHAP

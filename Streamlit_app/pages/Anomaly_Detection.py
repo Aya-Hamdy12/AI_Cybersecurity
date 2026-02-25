@@ -5,6 +5,17 @@ import os
 import time
 from datetime import datetime
 import plotly.express as px
+import json
+project_root = r"C:/Graduation Project/AI_Cybersecurity"
+FEATURES_PATH = os.path.join(project_root, "Streamlit_app", "feature_names.json")
+with open(FEATURES_PATH, "r") as f:
+    expected_columns = json.load(f)  # e.g., ["Flow Duration", "Tot Fwd Pkts", ...]
+import sys
+# Add the parent folder to sys.path so Python can find explainability_xai.py
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from explainability_xai import explain_single_anomaly, columns_names
+
+
 
 # Page Config
 st.set_page_config(
@@ -106,12 +117,22 @@ if "trend" not in st.session_state:
 
 # Upload CSV
 uploaded_file = st.file_uploader("Upload CSV file for anomaly detection", type=["csv"])
-if uploaded_file is not None:
-    st.session_state.data = pd.read_csv(uploaded_file)
-    st.success("Data uploaded successfully!")
-    st.subheader("Uploaded Data Preview")
-    st.dataframe(st.session_state.data.head())
 
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+
+    if len(df.columns) == len(expected_columns):
+        df.columns = expected_columns
+        st.success("Column names aligned with training features.")
+    else:
+        st.error("Feature count mismatch with trained model.")
+        st.stop()
+
+    st.session_state.data = df
+
+    st.subheader("Uploaded Data Preview")
+    st.dataframe(df.head())
+    
 
 # Live Classification Stream
 if st.session_state.data is not None and st.button("Start Live Stream"):
@@ -124,6 +145,9 @@ if st.session_state.data is not None and st.button("Start Live Stream"):
     trend_placeholder = st.empty()
     histogram_placeholder = st.empty()
     pie_placeholder = st.empty()
+    
+    # NEW: container for appending attacks
+    attacks_container = st.container()
 
     for i, row in st.session_state.data.iterrows():
         row_df = pd.DataFrame([row])
@@ -147,7 +171,7 @@ if st.session_state.data is not None and st.button("Start Live Stream"):
             ignore_index=True
         )
 
-        # Show live counters with colored badges
+        # Show live counters
         badge_placeholder.markdown(
             f"""
             <span style='background-color:#2196F3; color:white; padding:6px 12px; border-radius:8px; margin-right:10px; font-weight:bold;'>Normal: {normal_count}</span>
@@ -156,7 +180,7 @@ if st.session_state.data is not None and st.button("Start Live Stream"):
             unsafe_allow_html=True
         )
 
-        # Display live table with Time and Trafic only
+        # Display live table
         display_df = st.session_state.results[["Time", "Trafic"]].copy()
 
         def style_label(val):
@@ -168,6 +192,29 @@ if st.session_state.data is not None and st.button("Start Live Stream"):
         live_table_placeholder.dataframe(
             display_df.tail(200).style.applymap(style_label, subset=["Trafic"])
         )
+
+        # =========================
+        # APPEND ONLY NEW ATTACKS
+        # =========================
+        if anomaly_val == 1:
+            with attacks_container:
+                st.markdown("### Recent Attack")
+                st.markdown(f"🔴 **{current_time} — Attack Detected**")
+
+                with st.expander(f"Generate Explanation for {current_time}", expanded=False):
+
+                    x_sample = row.values.reshape(1, -1)
+
+                    with st.spinner("Generating explanation..."):
+                        top_features, explanation_text, fig = explain_single_anomaly(x_sample)
+
+                    st.markdown("#### Explanation")
+                    st.write(explanation_text)
+
+                    st.markdown("#### SHAP Waterfall")
+                    st.pyplot(fig)
+
+                    st.markdown("---")
 
         # Update trend line chart
         st.session_state.trend = pd.concat(
@@ -201,8 +248,8 @@ if st.session_state.data is not None and st.button("Start Live Stream"):
         )
         pie_placeholder.plotly_chart(fig_pie, use_container_width=True)
 
-        time.sleep(0.2)  # simulate live streaming delay
-
+        time.sleep(0.2)
+        
 # Download Results
 if not st.session_state.results.empty:
     csv = st.session_state.results.to_csv(index=False).encode("utf-8")
