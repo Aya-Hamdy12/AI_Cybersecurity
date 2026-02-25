@@ -6,11 +6,16 @@ import time
 from datetime import datetime
 import plotly.express as px
 import json
-project_root = r"C:/Graduation Project/AI_Cybersecurity"
-FEATURES_PATH = os.path.join(project_root, "Streamlit_app", "feature_names.json")
-with open(FEATURES_PATH, "r") as f:
-    expected_columns = json.load(f)  # e.g., ["Flow Duration", "Tot Fwd Pkts", ...]
 import sys
+
+
+project_root = os.path.dirname(os.path.abspath(__file__))
+FEATURES_PATH = os.path.join(project_root, "..", "feature_names.json")
+
+with open(FEATURES_PATH, "r") as f:
+    expected_columns = json.load(f)
+
+
 # Add the parent folder to sys.path so Python can find explainability_xai.py
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from explainability_xai import explain_single_anomaly, columns_names
