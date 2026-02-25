@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 
 
-project_root = r"C:/Graduation Project/AI_Cybersecurity"
+project_root = os.path.abspath(os.path.join(os.getcwd()))
 models_path = os.path.join(project_root, "Models")
 data_path   = os.path.join(project_root, "Data", "Processed")
 
