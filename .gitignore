@@ -2,8 +2,13 @@
 Data/
 
 # Ignore models
+Models/
 Models/*.pkl
 Models/*.h5
+
+# Ignore all pickle and CSV files (anywhere in repo)
+*.pkl
+*.csv
 
 # Python cache files
 __pycache__/
