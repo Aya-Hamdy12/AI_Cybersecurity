@@ -8,6 +8,23 @@ st.set_page_config(
     layout="wide",
 )
 
+# SESSION STATE INITIALIZE
+if "data" not in st.session_state:
+    st.session_state.data = None
+
+if "results" not in st.session_state:
+    st.session_state.results = None
+
+if "trend" not in st.session_state:
+    st.session_state.trend = None
+
+if "stream_started" not in st.session_state:
+    st.session_state.stream_started = False
+
+if "attack_samples" not in st.session_state:
+    st.session_state.attack_samples = []
+
+
 # CSS Styling (neon headers, hologram frame, metric cards)
 st.markdown("""
 <style>
