@@ -6,6 +6,8 @@ import time
 from datetime import datetime
 import plotly.express as px
 import json
+from tensorflow.keras.models import load_model
+from utils.ensemble_model import EnsembleIDS
 
 # Paths
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -31,23 +33,46 @@ h2 { font-size: 2rem; margin-bottom: 25px; }
 
 st.markdown('<h1>Live Anomaly Detection Stream</h1>', unsafe_allow_html=True)
 
-# Load Model
+# Base directory
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-MODEL_PATH = os.path.join(BASE_DIR, "Models", "iso_model.pkl")
+MODEL_DIR = os.path.join(BASE_DIR, "Models")
 
+# Load models
 try:
-    iso_model = joblib.load(MODEL_PATH)
+    iso_model = joblib.load(os.path.join(MODEL_DIR, "iso_model.pkl"))
+    pca_model = joblib.load(os.path.join(MODEL_DIR, "pca_model.pkl"))
+    ae_model = load_model(os.path.join(MODEL_DIR, "autoencoder.keras"))
+
+    iso_train_scores = joblib.load(os.path.join(MODEL_DIR, "iso_train_scores.pkl"))
+    ae_train_scores = joblib.load(os.path.join(MODEL_DIR, "ae_train_scores.pkl"))
+    pca_train_scores = joblib.load(os.path.join(MODEL_DIR, "pca_train_scores.pkl"))
+
+    ae_threshold = joblib.load(os.path.join(MODEL_DIR, "ae_threshold.pkl"))
+    pca_threshold = joblib.load(os.path.join(MODEL_DIR, "pca_threshold.pkl"))
+
 except FileNotFoundError:
-    st.error("Isolation Forest model not found. Please add 'iso_model.pkl' to the Models folder.")
+    st.error("One or more ensemble models are missing in the Models folder.")
     st.stop()
 
-# Initialize session_state variables
+# Initialize Ensemble
+ensemble_model = EnsembleIDS(
+    iso_model=iso_model,
+    ae_model=ae_model,
+    pca_model=pca_model,
+    ae_threshold=ae_threshold,
+    pca_threshold=pca_threshold
+)
+
+# Initialize session state
 if 'results' not in st.session_state:
     st.session_state.results = pd.DataFrame(columns=["Time", "Trafic", "anomaly"])
+
 if 'trend' not in st.session_state:
     st.session_state.trend = pd.DataFrame(columns=["Normal", "Anomaly"])
+
 if 'attack_samples' not in st.session_state:
     st.session_state.attack_samples = []
+
 if 'last_anomaly' not in st.session_state:
     st.session_state.last_anomaly = None
 
@@ -56,17 +81,21 @@ uploaded_file = st.file_uploader("Upload CSV file for anomaly detection", type=[
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
+
     if len(df.columns) == len(expected_columns):
         df.columns = expected_columns
         st.success("Column names aligned with training features.")
     else:
         st.error("Feature count mismatch with trained model.")
         st.stop()
+
     st.session_state.data = df
     st.subheader("Uploaded Data Preview")
     st.dataframe(df.head())
+
 # Start Live Stream
 if st.session_state.get('data') is not None and st.button("Start Live Stream"):
+
     normal_count = 0
     anomaly_count = 0
 
@@ -76,33 +105,50 @@ if st.session_state.get('data') is not None and st.button("Start Live Stream"):
     histogram_placeholder = st.empty()
     pie_placeholder = st.empty()
 
-    for i, row in st.session_state.data.iterrows():  # <-- i هو رقم السطر
+    for i, row in st.session_state.data.iterrows():
+
         row_df = pd.DataFrame([row])
-        pred = iso_model.predict(row_df)[0]
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         x_sample = row.values.reshape(1, -1)
 
-        if pred == 1:
+        # Ensemble prediction
+        result = ensemble_model.predict(
+            x_sample,
+            iso_train_scores,
+            ae_train_scores,
+            pca_train_scores
+        )
+
+        pred = result["ensemble_pred"][0]
+
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if pred == 0:
             anomaly_val = 0
             normal_count += 1
             label_text = "Normal"
+
         else:
             anomaly_val = 1
             anomaly_count += 1
             label_text = "Attack"
 
-            # Save anomaly for XAI with original index
+            # Save anomaly sample
             st.session_state.attack_samples.append({
                 "time": current_time,
                 "data": x_sample,
-                "index": i  
+                "index": i
             })
+
             st.session_state.last_anomaly_index = i
 
         # Append results
         st.session_state.results = pd.concat([
             st.session_state.results,
-            pd.DataFrame({"Time": [current_time], "Trafic": [label_text], "anomaly": [anomaly_val]})
+            pd.DataFrame({
+                "Time": [current_time],
+                "Trafic": [label_text],
+                "anomaly": [anomaly_val]
+            })
         ], ignore_index=True)
 
         # Update counters
@@ -110,31 +156,54 @@ if st.session_state.get('data') is not None and st.button("Start Live Stream"):
             f"""
             <span style='background-color:#2196F3; color:white; padding:6px 12px; border-radius:8px; margin-right:10px; font-weight:bold;'>Normal: {normal_count}</span>
             <span style='background-color:#f44336; color:white; padding:6px 12px; border-radius:8px; font-weight:bold;'>Attack: {anomaly_count}</span>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
-        # Update live table
+        # Style labels
         def style_label(val):
             return "background-color:#2196F3; color:white; font-weight:bold" if val == "Normal" else "background-color:#f44336; color:white; font-weight:bold"
 
-        live_table_placeholder.dataframe(st.session_state.results.tail(200).style.applymap(style_label, subset=["Trafic"]))
+        live_table_placeholder.dataframe(
+            st.session_state.results.tail(200).style.applymap(style_label, subset=["Trafic"])
+        )
 
         # Update trend
         st.session_state.trend = pd.concat([
             st.session_state.trend,
-            pd.DataFrame({"Normal": [normal_count], "Anomaly": [anomaly_count]})
+            pd.DataFrame({
+                "Normal": [normal_count],
+                "Anomaly": [anomaly_count]
+            })
         ], ignore_index=True)
+
         trend_placeholder.line_chart(st.session_state.trend)
 
         # Histogram
-        fig_hist = px.histogram(st.session_state.results, x="anomaly", color="anomaly",
-                                color_discrete_map={0: "#2196F3", 1: "#f44336"}, title="Anomaly Distribution (Live)")
+        fig_hist = px.histogram(
+            st.session_state.results,
+            x="anomaly",
+            color="anomaly",
+            color_discrete_map={0: "#2196F3", 1: "#f44336"},
+            title="Anomaly Distribution (Live)"
+        )
+
         histogram_placeholder.plotly_chart(fig_hist, use_container_width=True)
 
         # Pie chart
         counts = st.session_state.results['anomaly'].value_counts().reset_index()
         counts.columns = ['anomaly', 'count']
-        fig_pie = px.pie(counts, names='anomaly', values='count', color='anomaly',
-                         color_discrete_map={0: "#2196F3", 1: "#f44336"}, title="Anomaly Proportion (Live)", hole=0.3)
+
+        fig_pie = px.pie(
+            counts,
+            names='anomaly',
+            values='count',
+            color='anomaly',
+            color_discrete_map={0: "#2196F3", 1: "#f44336"},
+            title="Anomaly Proportion (Live)",
+            hole=0.3
+        )
+
         pie_placeholder.plotly_chart(fig_pie, use_container_width=True)
 
         time.sleep(0.2)
