@@ -59,18 +59,10 @@ $ cp .env.example .env
 - update `.env` with your credentials
 
 
-
 ```bash
 $ cd docker
 $ sudo docker compose up -d
 ```
-
-## Access Services
-
-- **FastAPI**: http://localhost:8000
-- **Flower Dashboard**: http://localhost:5555 (admin/password from env)
-- **Grafana**: http://localhost:3000
-- **Prometheus**: http://localhost:9090
 
 ## Run the FastAPI server (Development Mode)
 
