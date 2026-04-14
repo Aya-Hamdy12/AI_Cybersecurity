@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from helpers.utils import PyObjectId
 
 class Project(BaseModel):
-    id: Optional[PyObjectId] = Field(alias="_id")
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
     project_id: str = Field(..., min_length=1)
 
     @field_validator("project_id")
