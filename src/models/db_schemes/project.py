@@ -1,0 +1,20 @@
+from pydantic import BaseModel, Field, field_validator, ConfigDict, BeforeValidator, PlainSerializer
+from typing import Annotated, Optional
+from bson.objectid import ObjectId
+from helpers.utils import PyObjectId
+
+class Project(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id")
+    project_id: str = Field(..., min_length=1)
+
+    @field_validator("project_id")
+    @classmethod
+    def validate_project_id(cls, value):
+        if not value.strip():
+            raise ValueError("project_id cannot be empty or whitespace")
+        return value
+    
+    model_config = ConfigDict(
+        populate_by_name=True, 
+        arbitrary_types_allowed=True
+    )
