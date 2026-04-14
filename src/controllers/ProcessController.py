@@ -3,8 +3,9 @@ from .ProjectController import ProjectController
 import os
 from langchain_community.document_loaders import TextLoader, PyMuPDFLoader, CSVLoader, JSONLoader
 from models import ProcessingEnum
-
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+import pandas as pd
+from langchain.schema import Document
 
 class ProcessController(BaseController):
 
@@ -46,10 +47,39 @@ class ProcessController(BaseController):
 
         return documents
     
+    def process_csv_by_row(self, file_id: str):
+        file_path = os.path.join(self.project_path, file_id)
+        df = pd.read_csv(file_path)
+
+        chunks = []
+        for idx, row in df.iterrows():
+            row_text = "\n".join([
+                f"{col}: {val}" 
+                for col, val in row.items()
+            ])
+
+            chunk = Document(
+                page_content=row_text,
+                metadata={
+                    "source": file_path,
+                    "row_index": idx,
+                    "label": str(row.get("Label", "unknown")),
+                    "binary_label": str(row.get("binary_label", "unknown"))
+                }
+            )
+            chunks.append(chunk)
+
+        return chunks
 
 
     def process_file_content(self, file_content: list, file_id: str,
                             chunk_size: int=100, overlap_size: int=20):
+        file_extension = self.get_file_extension(file_id=file_id)
+        if not file_content or len(file_content) == 0:
+            return None
+        
+        if file_extension == ProcessingEnum.CSV.value:
+            return self.process_csv_by_row(file_id)
         
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size, 
