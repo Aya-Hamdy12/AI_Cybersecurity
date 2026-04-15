@@ -9,7 +9,9 @@ import logging
 from .schemes.data import ProcessRequest
 from models.ProjectModel import ProjectModel
 from models.ChunkModel import ChunkModel
-from models.db_schemes import DataChunk
+from models.AssetModel import AssetModel
+from models.db_schemes import DataChunk, Asset
+from models.enums.AssetTypeEnum import AssetTypeEnum
 
 
 
@@ -55,16 +57,24 @@ async def upload_data(request: Request, project_id: str, file: UploadFile, app_s
             status_code=status.HTTP_400_BAD_REQUEST, 
             content={
                 "message": f"{ResponseSignal.FILE_UPLOAD_FAILED.value} Error: {str(e)}"}
-            )        
+            )
+    # Store the assets into database
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    asset_resource = Asset(
+        asset_project_id=project.id,
+        asset_type=AssetTypeEnum.FILE.value,
+        asset_name=file_id,
+        asset_size=os.path.getsize(file_path)
+    )
+
+    asset_record = await asset_model.create_asset(asset=asset_resource)
 
     return JSONResponse(
         status_code=status.HTTP_200_OK, 
         content={"message": ResponseSignal.FILE_UPLOAD_SUCCESS.value,
-                  "file_id": file_id,
+                  "file_id": str(asset_record.id),
                 }
         )
-
-
 
 
 
@@ -89,7 +99,7 @@ async def process_endpoint(request: Request, project_id: str, process_request: P
             content={"message": ResponseSignal.PROCESSING_FAILED.value}
         )
 
-
+    
     file_chunks = process_controller.process_file_content(
         file_content=file_content, 
         file_id=file_id, 
@@ -135,7 +145,7 @@ async def process_endpoint(request: Request, project_id: str, process_request: P
                     "content": chunk.page_content,
                     "metadata": chunk.metadata
                 }
-                for idx, chunk in enumerate(file_chunks)
+                for idx, chunk in enumerate(file_chunks[:3]) # Return only the first 3 chunks for preview
             ]
         }
     )
