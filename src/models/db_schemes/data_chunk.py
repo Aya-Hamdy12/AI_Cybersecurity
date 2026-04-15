@@ -10,6 +10,7 @@ class DataChunk(BaseModel):
     chunk_order: int = Field(..., ge=0)
     chunk_text: str = Field(..., min_length=1)
     chunk_metadata: dict = Field(default_factory=dict)
+    chunk_asset_id: PyObjectId
     
 
     @field_validator("chunk_text")

@@ -9,5 +9,7 @@ class ResponseSignal(Enum):
     FILE_SIZE_EXCEEDED = "File size exceeds the maximum limit!"
     PROCESSING_SUCCESS = "File processed successfully"
     PROCESSING_FAILED = "File processing failed!"
+    NO_FILES_ERROR = "Not found any files to process!"
+    FILE_ID_ERROR = "No file found with this ID"
 
 
