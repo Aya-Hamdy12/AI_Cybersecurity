@@ -1,0 +1,9 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python.languageServer": "Pylance",
+    "editor.inlineSuggest.suppressSuggestions": true,
+    "chat.disableAIFeatures": false,
+    "editor.inlineSuggest.edits.showCollapsed": true,
+    "editor.inlineSuggest.experimental.showOnSuggestConflict": "never"
+}
